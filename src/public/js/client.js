@@ -129,8 +129,7 @@ socket.on("messages", function (data) {
 	console.log(data);
 });
 
-socket.on("speechData", function (data) {
-	// console.log(data.results[0].alternatives[0].transcript);
+socket.on("speechData", async function (data) {
 	var dataFinal = undefined || data.results[0].isFinal;
 
 	if (dataFinal === false) {
@@ -155,9 +154,11 @@ socket.on("speechData", function (data) {
 		}
 	} else if (dataFinal === true) {
 		resultText.lastElementChild.remove();
-		console.log(data);
 
-		textToSpeech(data.results[0].alternatives[0].transcript);
+		let text = await fetchResponse(data.results[0].alternatives[0].transcript);
+		console.log("🚀 ~ text:", text);
+		data.results[0].alternatives[0].transcript !== "" && textToSpeech(text);
+		// textToSpeech(data.results[0].alternatives[0].transcript);
 		//add empty span
 		let empty = document.createElement("span");
 		resultText.appendChild(empty);
@@ -185,6 +186,7 @@ socket.on("speechData", function (data) {
 		endButton.disabled = false;
 
 		removeLastSentence = false;
+		// return;
 	}
 });
 
@@ -228,7 +230,7 @@ function addTimeSettingsInterim(speechData) {
 	return words_without_time;
 }
 
-function addTimeSettingsFinal(speechData) {
+async function addTimeSettingsFinal(speechData) {
 	let wholeString = speechData.results[0].alternatives[0].transcript;
 
 	let nlpObject = nlp(wholeString).out("terms");
@@ -347,4 +349,31 @@ async function textToSpeech(text) {
 	} catch (error) {
 		console.error("Error converting text to speech:", error);
 	}
+}
+
+async function fetchResponse(text) {
+	console.log("🚀 ~ fetchResponse ~ text:", text);
+	const response = await fetch(
+		"https://api.groq.com/openai/v1/chat/completions",
+		{
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization:
+					"Bearer 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",
+			},
+			body: JSON.stringify({
+				model: "llama3-8b-8192",
+				messages: [
+					{
+						role: "user",
+						content: text,
+					},
+				],
+			}),
+		}
+	);
+	const data = await response.json();
+	console.log(data);
+	return data.choices[0].message.content;
 }
