@@ -154,14 +154,14 @@ socket.on("speechData", async function (data) {
 		}
 	} else if (dataFinal === true) {
 		resultText.lastElementChild.remove();
+		resultText.appendChild(empty);
 
 		let text = await fetchResponse(data.results[0].alternatives[0].transcript);
 		console.log("🚀 ~ text:", text);
-		data.results[0].alternatives[0].transcript !== "" && textToSpeech(text);
+		textToSpeech(text);
 		// textToSpeech(data.results[0].alternatives[0].transcript);
 		//add empty span
 		let empty = document.createElement("span");
-		resultText.appendChild(empty);
 
 		//add children to empty span
 		let edit = addTimeSettingsFinal(data);

@@ -66,17 +66,22 @@ io.on("connection", function (client) {
 			.streamingRecognize(request)
 			.on("error", console.error)
 			.on("data", (data) => {
+				console.time("startRecognitionStream");
 				process.stdout.write(
 					data.results[0] && data.results[0].alternatives[0]
 						? `Transcription: ${data.results[0].alternatives[0].transcript}\n`
 						: "\n\nReached transcription time limit, press Ctrl+C\n"
 				);
-				client.emit("speechData", data);
+				if (data.results[0].alternatives[0].transcript.length > 0) {
+					client.emit("speechData", data);
+				}
+				// client.emit("speechData", data);
 
 				// if end of utterance, let's restart stream
 				// this is a small hack. After 65 seconds of silence, the stream will still throw an error for speech length limit
 				if (data.results[0] && data.results[0].isFinal) {
 					stopRecognitionStream();
+					console.timeEnd("startRecognitionStream");
 					startRecognitionStream(client);
 					// console.log('restarted stream serverside');
 				}
